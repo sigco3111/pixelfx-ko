@@ -15,7 +15,9 @@
 
 ## 실행 화면
 
-<!-- 실제 라이브 화면 캡처 (배포 후 추가) -->
+![한글 갤러리 그리드](docs/screenshots/3-gallery-grid.png)
+
+![효과 상세 패널과 스프라이트 시트](docs/screenshots/4-effect-detail.png)
 
 ## 빠른 시작
 
