@@ -1,0 +1,54 @@
+name: deploy
+on:
+  push:
+    paths:
+      - '*.zip'
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack uploaded source zip
+        run: |
+          set -e
+          z=$(ls *.zip | head -1)
+          mkdir -p /tmp/src
+          unzip -q "$z" -d /tmp/src
+          rm -f "$z"
+          cp -a /tmp/src/. .
+          rm -f .github/workflows/gallery.yml
+          git checkout -- .github 2>/dev/null || true
+      - name: Commit source tree
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          rm -f .gitattributes
+          git add -A
+          git commit -m 'unpack source' || echo 'nothing to commit'
+          git push
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: node tools/check.mjs
+      - run: node tools/build-gallery.mjs
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/gallery
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
